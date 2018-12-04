@@ -19,8 +19,6 @@ if _key is None:
     _config_parser.read('config.ini')
     _key = _config_parser['DEFAULT']['KEY']
 
-
-
 GIT_GUD_CONFIG = {
     'key': _key,
 
@@ -39,6 +37,41 @@ GIT_GUD_CONFIG = {
     'commit_msg': 'Graded project, see the {}-file in the root directory',
 
 }
+
+class ResultPrinter:
+    def __init__(self, title='No title', header=[], dict={}):
+        self.title = title
+        self.header = header
+        self.data = dict
+
+    def __str__(self):
+        if len(self.data) == 0:
+            return 'No data'
+
+        line = '-' * (len(self.title) + 5)
+        result = line + '\n' + self.title + ': ' + str(len(self.data)) + '\n' + line + '\n'
+
+        if isinstance(self.data, dict):
+            longer_key = 0
+            for k in self.data.keys():
+                if len(k) > longer_key:
+                    longer_key = len(k)
+            longer_key+=4
+
+            if len(self.header) > 0:
+                result = result + '{col1:<{width}} {col2:100}'.format(col1=self.header[0], width=longer_key, col2=self.header[1]) + '\n\n'
+
+            for k,v in self.data.items():
+                result = result + '{key:<{width}} {value:100}'.format(key=k, width=longer_key, value=v) + '\n'
+
+        elif isinstance(self.data, list):
+            self.data.sort()
+            for r in self.data:
+                result += "{}: {}".format(self.header[0], r) + '\n'
+
+        return result
+
+
 
 def print_help():
     '''
@@ -175,25 +208,37 @@ def add_commit_push_grading_sheet():
     repos = os.listdir(project_dir)
     result = GIT_GUD_CONFIG['grading_file']
 
+    graded_students = ResultPrinter('Grading comment pushed to students bellow',['Student', 'Repository'], {})
+    no_repo_for_student = ResultPrinter('No repository was found to students bellow', ['Student'], [])
+    no_student_for_repo = ResultPrinter('No student was found on grading file to repositories bellow',['Repository'], [])
+
+
     for repo in repos:
         repo_dir = "{}/{}".format(project_dir, repo)
+        no_student_for_repo.data.append(repo)
         if os.path.isdir(repo_dir):
             # Try and find a student name matching the repo name
             found_student = False
             for student_name in grading_sheet.keys():
                 if repo.endswith(student_name):
+                    no_student_for_repo.data.remove(repo)
                     found_student = True
-                    print(f"Assuming {repo} belongs to {student_name}: "
-                          "adding grading comment")
+                    graded_students.data[student_name] = repo
+
                     with open(f"{repo_dir}/{result}", "w+") as f:
                         f.write(grading_sheet[student_name])
                     break
 
             if found_student:
                 git_add_commit_push(result, repo_dir)
-                print("Pushed changes to github")
+                print("Grading comment pushed to github: {}".format(repo))
             else:
-                print(f"Found no student matching repo name {repo}")
+                no_repo_for_student.data.append(student_name)
+
+    print(graded_students)
+    print(no_student_for_repo)
+    print(no_repo_for_student)
+
 
 
 def add_commit_push(project, comment):
