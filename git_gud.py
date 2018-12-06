@@ -45,11 +45,13 @@ class ResultPrinter:
         self.data = dict
 
     def __str__(self):
-        if len(self.data) == 0:
-            return 'No data'
 
         line = '-' * (len(self.title) + 5)
         result = line + '\n' + self.title + ': ' + str(len(self.data)) + '\n' + line + '\n'
+
+        if len(self.data) == 0:
+            result += 'No data \n'
+            return result
 
         if isinstance(self.data, dict):
             longer_key = 0
@@ -59,10 +61,10 @@ class ResultPrinter:
             longer_key+=4
 
             if len(self.header) > 0:
-                result = result + '{col1:<{width}} {col2:100}'.format(col1=self.header[0], width=longer_key, col2=self.header[1]) + '\n\n'
+                result += '{col1:<{width}} {col2:100}'.format(col1=self.header[0], width=longer_key, col2=self.header[1]) + '\n\n'
 
             for k,v in self.data.items():
-                result = result + '{key:<{width}} {value:100}'.format(key=k, width=longer_key, value=v) + '\n'
+                result += '{key:<{width}} {value:100}'.format(key=k, width=longer_key, value=v) + '\n'
 
         elif isinstance(self.data, list):
             self.data.sort()
