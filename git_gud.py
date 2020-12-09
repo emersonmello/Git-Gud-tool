@@ -6,14 +6,29 @@ import subprocess
 from github import Github, GithubException
 import configparser
 
-# Try to get it from system environment variable (On Linux/macOS you have to create it on $HOME/.bash_profile or .bashrc)
-_key = os.environ.get('GIT_GUD_TOKEN', None)
+# https://pypi.org/project/keyring/
+import keyring
 
-# If you are not using environment variable, then try to get GITHUB TOKEN KEY from config.ini file.
+# To store github token on OS keystore
+# keyring.set_password("system", "gitgudtoken", "YOUR GITHUB PERSONAL ACCESS TOKEN")
+
+# Get TOKEN from OS keystore (the best option!)
+_key = keyring.get_password("system", "gitgudtoken")
+
 if _key is None:
-    ''' On 'config.ini' file
+    '''
+    Try to get it from system environment variable (it is not good practice).
+    You have to create GIT_GUD_TOKEN envvar inside of ~/.bashrc or ~/.zshrc, etc.
+    '''
+    _key = os.environ.get('GIT_GUD_TOKEN', None)
+elif _key is None:
+    '''
+    If you are not using environment variable, then try to get GITHUB TOKEN KEY from config.ini file.
+    (it is not a good idea as well, you should use keyring)
+
+    On 'config.ini' file
     [DEFAULT]
-    KEY = Your API KEY
+    KEY = YOUR GITHUB PERSONAL ACCESS TOKEN
     '''
     _config_parser = configparser.ConfigParser()
     _config_parser.read('config.ini')
@@ -88,12 +103,13 @@ def print_help():
     usage = f"{sys.argv[0]} <action> [--organization/-o=<org>] <search string>"
     print(f"Usage: {usage}")
     print("Available actions:")
-    print("    ls")
-    print("    push-comment")
-    print("    push-pass-fail")
     print("    clone")
-    print("    set_readonly")
+    print("    ls")
+    print("    push-checkpoint")
+    print("    push-comment")
     print("    push-grade-sheet")
+    print("    push-pass-fail")
+    print("    set_readonly")
 
 
 def is_matching(repo, project, organization):
