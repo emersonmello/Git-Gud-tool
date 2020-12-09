@@ -38,9 +38,9 @@ GIT_GUD_CONFIG = {
     'key': _key,
 
     'owners': {
-        "GitHub_User_Name1",
-        "GitHub_User_Name2",
-        "GitHub_User_Name3"
+        "GitHub_User_Name1_CHANGE_IT",
+        "GitHub_User_Name2_CHANGE_IT",
+        "GitHub_User_Name3_CHANGE_IT"
     },
 
     'grading_file': "GRADING.md",
@@ -60,13 +60,11 @@ class ResultPrinter:
         self.data = dict
 
     def __str__(self):
+        if len(self.data) == 0:
+            return 'No data'
 
         line = '-' * (len(self.title) + 5)
         result = line + '\n' + self.title + ': ' + str(len(self.data)) + '\n' + line + '\n'
-
-        if len(self.data) == 0:
-            result += 'No data \n'
-            return result
 
         if isinstance(self.data, dict):
             longer_key = 0
@@ -105,6 +103,7 @@ def print_help():
     print("Available actions:")
     print("    clone")
     print("    ls")
+    print("    pull")
     print("    push-checkpoint")
     print("    push-comment")
     print("    push-grade-sheet")
@@ -258,6 +257,17 @@ def add_commit_push_grading_sheet():
     print(no_repo_for_student)
 
 
+def pull_local_repositories(project):
+    ''''
+    To execute a git pull --rebase
+    '''
+    project_dir = "{}/{}".format(os.getcwd(), project)
+    repos = os.listdir(project_dir)
+    for repo in repos:
+        repo_dir = "{}/{}".format(project_dir, repo)
+        if os.path.isdir(repo_dir):
+            subprocess.run(["git", "pull", "--rebase"], cwd=repo_dir)
+
 
 def add_commit_push(project, comment):
     '''
@@ -410,6 +420,8 @@ if __name__ == "__main__":
         ans = input()
         if ans == "YES":
             set_matching_readonly(project, organization)
+    elif action == "pull":
+        pull_local_repositories(project)
     elif action == "push-pass-fail":
         if organization is not None:
             print("Organization does not affect pushing")
